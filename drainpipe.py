@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -57,12 +58,16 @@ if __name__ == '__main__':
     try:
         _, pattern, path_to_csv = sys.argv
 
-        cache = redis.Redis()
+        redis_host = os.environ.get('redis_host') or 'localhost'
+        redis_port = os.environ.get('redis_port') or 6379
+        idle_seconds = os.environ.get('idle_seconds') or 1
+
+        cache = redis.Redis(redis_host, redis_port)
         drain = StreamDumper(cache, pattern, path_to_csv)
 
         while True:
             drain.consume_streams()
-            time.sleep(1)
+            time.sleep(idle_seconds)
 
     except ValueError:
         print(help_message)
