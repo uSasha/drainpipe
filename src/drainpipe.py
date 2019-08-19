@@ -56,11 +56,12 @@ class StreamDumper:
 
 if __name__ == '__main__':
     try:
-        _, pattern, path_to_csv = sys.argv
+        _, pattern, file_name = sys.argv
+        path_to_csv = f'../data/{file_name}'
 
         redis_host = os.environ.get('redis_host') or 'localhost'
-        redis_port = os.environ.get('redis_port') or 6379
-        idle_seconds = os.environ.get('idle_seconds') or 1
+        redis_port = int(os.environ.get('redis_port') or 6379)
+        idle_seconds = float(os.environ.get('idle_seconds') or 1)
 
         cache = redis.Redis(redis_host, redis_port)
         drain = StreamDumper(cache, pattern, path_to_csv)
