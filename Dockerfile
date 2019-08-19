@@ -14,8 +14,8 @@ RUN cd /app/ \
 ENV PATH /app/env/bin:$PATH
 
 VOLUME /app/data
-COPY src /app/src
+COPY src /app/
 
 
-WORKDIR /app/src
+WORKDIR /app/
 ENTRYPOINT ["python", "drainpipe.py"]
