@@ -30,13 +30,13 @@ class StreamDumper:
             return []
 
     def consume_streams(self):
-        _, streams = cache.scan(match=pattern, count=int(10e10))
+        _, streams = cache.scan(match=self.pattern)
         for stream in streams:
             if stream not in self.stream_cursor:
-                self.stream_cursor[stream] = '$'
+                self.stream_cursor[stream] = self.redis.xrevrange(stream, count=1)[0][0]  # last ID
 
-        result = cache.xread(self.stream_cursor, block=0)
-        if not self.header:
+        result = cache.xread(self.stream_cursor, block=None)
+        if not self.header and result:
             self.header = self.find_header(result)
             with open(self.log_path, 'w') as f:
                 f.write(','.join(self.header) + '\n')
