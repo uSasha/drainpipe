@@ -67,6 +67,7 @@ if __name__ == '__main__':
         _, pattern, file_name = sys.argv
     except ValueError:
         print(help_message)
+        sys.exit()
 
     path_to_csv = f'data/{file_name}'
     redis_host = os.environ.get('redis_host') or 'localhost'
