@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: test
-      run: echo ${{ GITHUB_SHA }}
+      run: echo $HOME
     - uses: actions/checkout@master
     
     - name: build image
