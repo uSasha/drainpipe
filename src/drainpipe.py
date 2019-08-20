@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import sys
@@ -7,10 +8,12 @@ import pandas as pd
 import redis
 
 help_message = 'Hello, please pass pattern to match and path to CSV file to dump.'
+logger = logging.getLogger('drainpipe')
 
 
 class StreamDumper:
     def __init__(self, redis, pattern, log_path, consumer_group='default', consumer_name='default'):
+        logger.debug('init drainpipe')
         self.redis = redis
         self.pattern = pattern
         self.log_path = log_path
@@ -21,21 +24,26 @@ class StreamDumper:
         try:
             with open(self.log_path, 'r') as f:
                 self.header = [word for word in f.readline().strip().split(',') if word]
+                logger.debug('header inferred from file: %s', self.header)
         except FileNotFoundError:
             self.header = []
+        logger.info('drainpipe initialized, pattern: %s, CSV: %s', self.pattern,  self.log_path)
 
     @staticmethod
     def find_header(stream_content):
         columns = [column.decode() for column in stream_content[0][1][0][1].keys()]
         if columns:
+            logger.debug('header inferred from stream: %s', ['stream', 'timestamp'] + columns)
             return ['stream', 'timestamp'] + columns
         else:
+            logger.debug('header not found in stream')
             return []
 
     def consume_streams(self):
         _, streams = self.redis.scan(match=self.pattern, count=int(10e10))  # somehow None option don't work
         for stream in streams:
             if stream not in self.stream_cursor:
+                logger.info('new stream found: %s', stream)
                 try:
                     self.stream_cursor[stream] = '>'
                     self.redis.xgroup_create(stream, self.consumer_group)
@@ -52,7 +60,8 @@ class StreamDumper:
 
         for stream, content in result:
             df = pd.DataFrame(content, columns=['timestamp', 'content'])
-            df['timestamp'] = df['timestamp'].apply(lambda t: int(t.decode().split('-')[0]) // 1000)
+            timestamp = df['timestamp'].apply(lambda t: int(t.decode().split('-')[0]) // 1000)
+            df['timestamp'] = timestamp
             df['stream'] = stream.decode()
 
             for column in self.header:
@@ -60,6 +69,7 @@ class StreamDumper:
                     df[column] = df['content'].apply(lambda c: c.get(column.encode(), b'').decode())
 
             df[self.header].to_csv(self.log_path, mode='a', index=False, header=None)
+            logger.debug('dumped %s stream up to %s', stream, timestamp)
 
 
 if __name__ == '__main__':
@@ -67,6 +77,7 @@ if __name__ == '__main__':
         _, pattern, file_name = sys.argv
     except ValueError:
         print(help_message)
+        logger.error('no arguments provided, going to exit now')
         sys.exit()
 
     path_to_csv = f'data/{file_name}'
