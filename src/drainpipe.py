@@ -3,6 +3,7 @@ import os
 import random
 import sys
 import time
+from typing import List
 
 import pandas as pd
 import redis
@@ -12,7 +13,22 @@ logger = logging.getLogger('drainpipe')
 
 
 class StreamDumper:
-    def __init__(self, redis, pattern, log_path, consumer_group='default', consumer_name='default'):
+    """
+    Class to parse multiple Redis Streams and persist all new data to one CSV file.
+    Parser will use header from CSV file if exists or keys from first updated stream,
+    once initialized no new fields will be addad.
+    """
+    def __init__(self, redis: redis.client.Redis, pattern: str, log_path: str,
+                 consumer_group: str = 'default', consumer_name: str = 'default') -> None:
+        """
+        Create new stream dumper.
+        :param redis: redis connection
+        :param pattern: patter to match, use * for wildcard
+        :param log_path: path to CSV file to store new messages
+        :param consumer_group: consumer group name, usefull when you want to use more than ane drainpipe on stream
+        to strore updates to more than one file (e.g. streams 1, 2, 3 -> small.csv; 2, 4, 6 -> even.csv)
+        :param consumer_name: consumer name, used to be able to run multiple replicas of same drainpipes for scaling
+        """
         logger.debug('init drainpipe')
         self.redis = redis
         self.pattern = pattern
@@ -30,7 +46,12 @@ class StreamDumper:
         logger.info('drainpipe initialized, pattern: %s, CSV: %s', self.pattern,  self.log_path)
 
     @staticmethod
-    def find_header(stream_content):
+    def find_header(stream_content: List) -> List[str]:
+        """
+        Infer CSV header based on keys in first found message
+        :param stream_content: unmodified response of redis.Redis().xreadgroup()
+        :return: list of columns started with 'stream' and 'timestamp' and that decoded stream fields
+        """
         columns = [column.decode() for column in stream_content[0][1][0][1].keys()]
         if columns:
             logger.debug('header inferred from stream: %s', ['stream', 'timestamp'] + columns)
@@ -39,7 +60,11 @@ class StreamDumper:
             logger.debug('header not found in stream')
             return []
 
-    def consume_streams(self):
+    def consume_streams(self) -> None:
+        """
+        Check for new streams matching self.pattern, start track if any.
+        Check for updates in tracked streams, dump new messages to CSV.
+        """
         _, streams = self.redis.scan(match=self.pattern, count=int(10e10))  # somehow None option don't work
         for stream in streams:
             if stream not in self.stream_cursor:
