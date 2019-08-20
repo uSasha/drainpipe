@@ -9,10 +9,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: test
+      run: echo ${{ GITHUB_SHA }}
     - uses: actions/checkout@master
     
     - name: build image
-      run: docker build -t usasha/drainpipe:${{ ENV.GITHUB_SHA }} -t usasha/drainpipe:latest .
+      run: docker build -t usasha/drainpipe:${{ GITHUB_SHA }} -t usasha/drainpipe:latest .
       
     - name: login
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
@@ -23,7 +25,7 @@ jobs:
     - name: Logout
       run: docker logout
       
-    - name: ASCII Art Action
-      uses: mscoutermarsh/ascii-art-action@1.0.0
-      with:
-        args: "Drainpipe"
+#     - name: ASCII Art Action
+#       uses: mscoutermarsh/ascii-art-action@1.0.0
+#       with:
+#         args: "Drainpipe"
