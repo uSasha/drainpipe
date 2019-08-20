@@ -8,7 +8,23 @@ from typing import List
 import pandas as pd
 import redis
 
-help_message = 'Hello, please pass pattern to match and path to CSV file to dump.'
+hello_message = """
+Drainpipe is a tool to dump messages from multiple Redis Streams to single CSV file on disk, 
+it could be scaled and reused with different settings multiple times simultaneously.
+Usage: docker run -v <LOCAL_DIR>:/app/data --network host drainpipe <PATTER_TO_MATCH_STREAMS> <CSV_FILE_NAME>
+
+You can have more flexibility with ENV variables:
+- redis_host
+- redis_port
+- idle_seconds: seconds to sleep between checks for new messages
+- header: specify keys you want to store (e.g. 'user_id,item_id,stars'), 
+drainpipe will add stream and timestamp fields
+- consumer_group: usefull when you want to use more than ane drainpipe on stream 
+to strore updates to more than one file (e.g. streams 1, 2, 3 -> small.csv; 2, 4, 6 -> even.csv)
+- consumer_name: to be able to run multiple replicas of same drainpipes for scaling
+"""
+
+help_message = 'Usage: stream_pattern_to_mach, path_to_CSV'
 logger = logging.getLogger('drainpipe')
 
 
@@ -19,7 +35,8 @@ class StreamDumper:
     once initialized no new fields will be addad.
     """
     def __init__(self, redis: redis.client.Redis, pattern: str, log_path: str,
-                 consumer_group: str = 'default', consumer_name: str = 'default') -> None:
+                 consumer_group: str = 'default', consumer_name: str = 'default',
+                 header: List[str] = []) -> None:
         """
         Create new stream dumper.
         :param redis: redis connection
@@ -37,12 +54,19 @@ class StreamDumper:
         self.consumer_group = consumer_group
         self.consumer_name = consumer_name
 
-        try:
-            with open(self.log_path, 'r') as f:
-                self.header = [word for word in f.readline().strip().split(',') if word]
-                logger.debug('header inferred from file: %s', self.header)
-        except FileNotFoundError:
-            self.header = []
+        if header:
+            self.header = ['stream', 'timestamp'] + header
+            with open(self.log_path, 'a') as f:
+                f.write(','.join(self.header) + '\n')
+            logger.debug('header provided by user: %s', self.header)
+        else:
+            try:
+                with open(self.log_path, 'r') as f:
+                    self.header = [word for word in f.readline().strip().split(',') if word]
+                    logger.debug('header inferred from file: %s', self.self.header)
+            except FileNotFoundError:
+                pass
+
         logger.info('drainpipe initialized, pattern: %s, CSV: %s', self.pattern,  self.log_path)
 
     @staticmethod
@@ -98,6 +122,7 @@ class StreamDumper:
 
 
 if __name__ == '__main__':
+    print(hello_message)
     try:
         _, pattern, file_name = sys.argv
     except ValueError:
@@ -109,13 +134,14 @@ if __name__ == '__main__':
     redis_host = os.environ.get('redis_host') or 'localhost'
     redis_port = int(os.environ.get('redis_port') or 6379)
     idle_seconds = float(os.environ.get('idle_seconds') or 1)
+    header = (os.environ.get('header') or '').split(',')
     consumer_group = os.environ.get('consumer_group') or 'drainpipe'
     consumer_name = os.environ.get('HOSTNAME') or 'local'
     if 'linuxkit' in consumer_name:
         consumer_name = random.randint(0, 10e10)  # docker for mac
 
     cache = redis.Redis(redis_host, redis_port)
-    drain = StreamDumper(cache, pattern, path_to_csv, consumer_group, consumer_name)
+    drain = StreamDumper(cache, pattern, path_to_csv, consumer_group, consumer_name, header)
 
     while True:
         drain.consume_streams()
