@@ -10,11 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+    
     - name: build image
       run: docker build -t usasha/drainpipe .
+      
     - name: login
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      
     - name: push image to registry
       run: docker push usasha/drainpipe
+
     - name: Logout
       run: docker logout
+      
+    - name: ASCII Art Action
+      uses: mscoutermarsh/ascii-art-action@1.0.0
+      args: "Drainpipe"
