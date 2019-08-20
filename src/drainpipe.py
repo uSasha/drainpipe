@@ -8,9 +8,17 @@ from typing import List
 import pandas as pd
 import redis
 
+logo = """
+     _/\/\/\/\/\_________________________/\/\_________________________/\/\_________________________
+    _/\/\____/\/\_/\/\__/\/\_/\/\/\____________/\/\/\/\___/\/\/\/\__________/\/\/\/\_____/\/\/\___ 
+   _/\/\____/\/\_/\/\/\/\_______/\/\___/\/\___/\/\__/\/\_/\/\__/\/\_/\/\___/\/\__/\/\_/\/\/\/\/\_  
+  _/\/\____/\/\_/\/\_______/\/\/\/\___/\/\___/\/\__/\/\_/\/\/\/\___/\/\___/\/\/\/\___/\/\_______   
+ _/\/\/\/\/\___/\/\_______/\/\/\/\/\_/\/\/\_/\/\__/\/\_/\/\_______/\/\/\_/\/\_________/\/\/\/\_    
+______________________________________________________/\/\______________/\/\__________________     
+"""
+
 hello_message = """
-Drainpipe is a tool to dump messages from multiple Redis Streams to single CSV file on disk, 
-it could be scaled and reused with different settings multiple times simultaneously.
+Drainpipe is a tool to dump messages from multiple Redis Streams to single CSV file on disk. 
 Usage: docker run -v <LOCAL_DIR>:/app/data --network host drainpipe <PATTER_TO_MATCH_STREAMS> <CSV_FILE_NAME>
 
 You can have more flexibility with ENV variables:
@@ -122,6 +130,7 @@ class StreamDumper:
 
 
 if __name__ == '__main__':
+    print(logo)
     print(hello_message)
     try:
         _, pattern, file_name = sys.argv
