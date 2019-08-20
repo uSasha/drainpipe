@@ -21,7 +21,7 @@ to store updates to more than one file (e.g. streams 1, 2, 3 -> small.csv; 2, 4,
 - consumer_name: to be able to run multiple replicas of same drainpipes for scaling
 
 
-## usage patterns:
+##№ Usage patterns:
 Drainpipes could be scaled and work in groups for better performance.
 
 Single stream to CSV file (single grainpipe/goup) st_1 -> st1.csv:
