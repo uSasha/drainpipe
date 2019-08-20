@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@master
     
     - name: build image
-      run: docker build -t usasha/drainpipe:$GITHUB_SHA -t usasha/drainpipe:latest .
+      run: docker build -t usasha/drainpipe:${GITHUB_SHA:0:6} -t usasha/drainpipe:latest .
       
     - name: login
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
