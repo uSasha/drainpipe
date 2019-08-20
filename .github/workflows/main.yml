@@ -9,8 +9,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: test
-      run: echo $GITHUB_SHA
     - uses: actions/checkout@master
     
     - name: build image
@@ -24,8 +22,3 @@ jobs:
 
     - name: Logout
       run: docker logout
-      
-#     - name: ASCII Art Action
-#       uses: mscoutermarsh/ascii-art-action@1.0.0
-#       with:
-#         args: "Drainpipe"
