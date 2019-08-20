@@ -19,8 +19,8 @@ You can have more flexibility with ENV variables:
 - idle_seconds: seconds to sleep between checks for new messages
 - header: specify keys you want to store (e.g. 'user_id,item_id,stars'), 
 drainpipe will add stream and timestamp fields
-- consumer_group: usefull when you want to use more than ane drainpipe on stream 
-to strore updates to more than one file (e.g. streams 1, 2, 3 -> small.csv; 2, 4, 6 -> even.csv)
+- consumer_group: useful when you want to use more than ane drainpipe on stream 
+to store updates to more than one file (e.g. streams 1, 2, 3 -> small.csv; 2, 4, 6 -> even.csv)
 - consumer_name: to be able to run multiple replicas of same drainpipes for scaling
 """
 
@@ -89,7 +89,7 @@ class StreamDumper:
         Check for new streams matching self.pattern, start track if any.
         Check for updates in tracked streams, dump new messages to CSV.
         """
-        _, streams = self.redis.scan(match=self.pattern, count=int(10e10))  # somehow None option don't work
+        _, streams = self.redis.scan(match=self.pattern, count=int(10e10))
         for stream in streams:
             if stream not in self.stream_cursor:
                 logger.info('new stream found: %s', stream)
