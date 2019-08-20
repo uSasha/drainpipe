@@ -9,6 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@master
     - name: build image
       run: docker build -t usasha/drainpipe .
     - name: login
