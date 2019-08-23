@@ -1,0 +1,10 @@
+name: test VPS CPU
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: banchmark
+      run: docker run usasha/vps_test
