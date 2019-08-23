@@ -7,4 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: banchmark
-      run: docker run usasha/vps_test
+      run: |
+        docker run usasha/vps_test
+        free -h
+        lscpu
